@@ -1,0 +1,64 @@
+"""
+Prometheus 告警规则
+"""
+groups:
+  - name: ffe-availability
+    rules:
+      - alert: FFEHighErrorRate
+        expr: rate(ffe_http_requests_total{status_code=~"5.."}[5m]) / rate(ffe_http_requests_total[5m]) > 0.01
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "命理引擎错误率超过 1%"
+          description: "5分钟内错误率 {{ $value | humanizePercentage }}，超出 SLO 0.1% 阈值"
+          runbook: "https://docs.ffe.internal/runbooks/high-error-rate"
+
+      - alert: FFESlowResponse
+        expr: histogram_quantile(0.99, rate(ffe_http_request_duration_seconds_bucket[5m])) > 1.0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "P99 延迟超过 1s SLO"
+          description: "当前 P99 延迟 {{ $value }}s"
+          runbook: "https://docs.ffe.internal/runbooks/slow-response"
+
+      - alert: FFEErrorBudgetBurn
+        expr: ffe_error_budget_remaining_ratio < 0.2
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "错误预算剩余不足 20%"
+          description: "剩余 {{ $value | humanizePercentage }}"
+
+  - name: ffe-systems
+    rules:
+      - alert: FFESystemCircuitBreakerOpen
+        expr: ffe_systems_active < 5
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "超过半数命理体系被熔断"
+          description: "当前可用体系 {{ $value }} 个"
+
+      - alert: FFESystemCalculationSlow
+        expr: histogram_quantile(0.95, rate(ffe_calculation_duration_seconds_bucket[5m])) > 0.5
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "命理体系计算延迟升高"
+
+  - name: ffe-cache
+    rules:
+      - alert: FFECacheHitRateLow
+        expr: rate(ffe_cache_hits_total[5m]) / (rate(ffe_cache_hits_total[5m]) + rate(ffe_cache_misses_total[5m])) < 0.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "缓存命中率低于 50%"
+          description: "当前命中率 {{ $value | humanizePercentage }}"

@@ -1,0 +1,73 @@
+"""
+Grafana 仪表盘配置 - 多命理融合预测引擎
+"""
+dashboard:
+  title: "多命理融合预测引擎 - SRE 仪表盘"
+  tags: ["ffe", "sre"]
+  timezone: "Asia/Shanghai"
+  panels:
+    - title: "请求速率 (QPS)"
+      type: graph
+      targets:
+        - expr: "sum(rate(ffe_http_requests_total[1m]))"
+          legendFormat: "总 QPS"
+        - expr: "sum(rate(ffe_http_requests_total{status_code=~'2..'}[1m]))"
+          legendFormat: "成功 QPS"
+    
+    - title: "P50/P95/P99 延迟"
+      type: graph
+      targets:
+        - expr: "histogram_quantile(0.5, sum(rate(ffe_http_request_duration_seconds_bucket[5m])) by (le))"
+          legendFormat: "P50"
+        - expr: "histogram_quantile(0.95, sum(rate(ffe_http_request_duration_seconds_bucket[5m])) by (le))"
+          legendFormat: "P95"
+        - expr: "histogram_quantile(0.99, sum(rate(ffe_http_request_duration_seconds_bucket[5m])) by (le))"
+          legendFormat: "P99"
+      yaxes:
+        - format: "s"
+          label: "延迟"
+    
+    - title: "错误率"
+      type: singlestat
+      targets:
+        - expr: "sum(rate(ffe_http_requests_total{status_code=~'5..'}[5m])) / sum(rate(ffe_http_requests_total[5m]))"
+      thresholds: "0.001,0.01"
+      format: "percentunit"
+    
+    - title: "错误预算剩余"
+      type: gauge
+      targets:
+        - expr: "ffe_error_budget_remaining_ratio"
+      thresholds: "0.2,0.5"
+      format: "percentunit"
+    
+    - title: "各体系计算耗时"
+      type: graph
+      targets:
+        - expr: "histogram_quantile(0.95, sum(rate(ffe_calculation_duration_seconds_bucket{system=~'.*'}[5m])) by (le, system))"
+          legendFormat: "{{system}} P95"
+    
+    - title: "融合评分分布"
+      type: histogram
+      targets:
+        - expr: "sum(rate(ffe_fusion_score_bucket[5m])) by (le)"
+    
+    - title: "缓存命中率"
+      type: pie
+      targets:
+        - expr: "sum(rate(ffe_cache_hits_total[5m]))"
+          legendFormat: "命中"
+        - expr: "sum(rate(ffe_cache_misses_total[5m]))"
+          legendFormat: "未命中"
+    
+    - title: "熔断状态"
+      type: stat
+      targets:
+        - expr: "ffe_systems_active"
+          legendFormat: "可用体系数"
+    
+    - title: "融合冲突次数"
+      type: graph
+      targets:
+        - expr: "sum(rate(ffe_fusion_conflicts_total[1h])) by (severity)"
+          legendFormat: "{{severity}} 冲突"

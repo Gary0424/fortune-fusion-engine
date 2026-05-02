@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fortune Fusion Engine · 多维度命理融合分析</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        bg: '#050714',
+                        card: '#0c1127',
+                        border: '#1a2142',
+                        text: '#e8e9ff',
+                        muted: '#8a8fb9',
+                        accent: '#9333ea',
+                        accent2: '#d946ef',
+                        green: '#10b981',
+                        yellow: '#f59e0b',
+                        red: '#ef4444',
+                        cosmic: '#6366f1',
+                        nebula: '#8b5cf6',
+                        star: '#f472b6'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mystical: ['Cinzel', 'serif']
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate'
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' }
+                        },
+                        glow: {
+                            '0%': { boxShadow: '0 0 5px rgba(147, 51, 234, 0.5)' },
+                            '100%': { boxShadow: '0 0 20px rgba(147, 51, 234, 0.8), 0 0 30px rgba(217, 70, 239, 0.6)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&display=swap" rel="stylesheet">
+    <style type="text/tailwindcss">
+        .rune {
+            position: absolute;
+            font-size: 24px;
+            opacity: 0.1;
+            color: #9333ea;
+            animation: float 8s ease-in-out infinite;
+            z-index: 0;
+            font-family: 'Cinzel', serif;
+        }
+        @layer utilities {
+            .gradient-btn {
+                background: linear-gradient(135deg, theme('colors.accent'), theme('colors.accent2'));
+                box-shadow: 0 0 15px rgba(147, 51, 234, 0.5);
+                transition: all 0.3s ease;
+            }
+            .gradient-btn:hover {
+                box-shadow: 0 0 25px rgba(147, 51, 234, 0.8), 0 0 35px rgba(217, 70, 239, 0.6);
+                transform: translateY(-2px);
+            }
+            .gradient-btn:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+                transform: none;
+                box-shadow: none;
+            }
+            .card-shadow {
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+            }
+            .card-glow {
+                box-shadow: 0 0 20px rgba(147, 51, 234, 0.3);
+                border: 1px solid rgba(147, 51, 234, 0.2);
+            }
+            .input-focus {
+                @apply focus:ring-2 focus:ring-accent focus:border-transparent;
+            }
+            .spinner {
+                animation: spin 1s linear infinite;
+            }
+            @keyframes spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+            .progress-bar {
+                @apply h-2 rounded-full bg-border overflow-hidden;
+                box-shadow: inset 0 0 5px rgba(147, 51, 234, 0.3);
+            }
+            .progress-fill {
+                @apply h-full transition-all duration-500 ease-out;
+                box-shadow: 0 0 10px currentColor;
+            }
+            .score-high { @apply text-green; text-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
+            .score-medium { @apply text-yellow; text-shadow: 0 0 10px rgba(245, 158, 11, 0.5); }
+            .score-low { @apply text-red; text-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
+            .trend-positive { @apply bg-green text-white; box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
+            .trend-neutral { @apply bg-yellow text-white; box-shadow: 0 0 10px rgba(245, 158, 11, 0.5); }
+            .trend-negative { @apply bg-red text-white; box-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
+            .mystical-border {
+                position: relative;
+            }
+            .mystical-border::before {
+                content: '';
+                position: absolute;
+                top: -2px;
+                left: -2px;
+                right: -2px;
+                bottom: -2px;
+                background: linear-gradient(45deg, theme('colors.accent'), theme('colors.accent2'), theme('colors.cosmic'), theme('colors.nebula'));
+                border-radius: inherit;
+                z-index: -1;
+                opacity: 0.7;
+                animation: borderRotate 4s linear infinite;
+            }
+            @keyframes borderRotate {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            .system-icon {
+                width: 40px;
+                height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                background: linear-gradient(135deg, theme('colors.accent'), theme('colors.accent2'));
+                margin-bottom: 8px;
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-bg text-text min-h-screen relative overflow-x-hidden">
+    <!-- 背景效果 -->
+    <div class="fixed inset-0 z-0 opacity-20">
+        <img src="https://p26-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/4599ace511aa4b3fbd6a6b4992b8ecf9~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=20260501001734FECB2CE84A0BD1E60B0B&rrcfp=f06b921b&x-expires=1780157885&x-signature=woC51D2S8Tpe22IpCZJh1rMKB9s%3D" 
+             alt="神秘学背景" class="w-full h-full object-cover">
+    </div>
+    <!-- 星空粒子效果 -->
+    <div id="stars" class="fixed inset-0 z-0"></div>
+    <!-- Header -->
+    <header class="border-b border-border py-4 px-6">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-3xl font-bold font-mystical bg-gradient-to-r from-accent via-star to-accent2 bg-clip-text text-transparent animate-pulse-slow">
+                Fortune Fusion Engine · 命理融合推算
+            </h1>
+            <div class="text-muted text-sm flex items-center">
+                <i class="fa fa-star text-yellow mr-1 animate-pulse"></i>
+                <span>10大体系 · 动态融合 · 智能决策</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto p-6 relative">
+        <!-- 神秘符文装饰 -->
+        <div class="rune" style="top: 10%; left: 5%; animation-delay: 0s;">八字</div>
+        <div class="rune" style="top: 20%; right: 8%; animation-delay: -2s;">紫微</div>
+        <div class="rune" style="bottom: 30%; left: 10%; animation-delay: -4s;">奇门</div>
+        <div class="rune" style="bottom: 20%; right: 12%; animation-delay: -6s;">六壬</div>
+        <div class="flex flex-col md:flex-row gap-6">
+            <!-- Left Input Panel -->
+            <div class="w-full md:w-[340px] bg-card rounded-lg p-6 card-shadow card-glow animate-float relative z-10">
+                <div class="absolute -top-3 -left-3 w-12 h-12 rounded-full bg-gradient-to-br from-accent to-accent2 flex items-center justify-center text-white font-bold">
+                    <i class="fa fa-magic"></i>
+                </div>
+                <h2 class="text-xl font-semibold mb-6 font-mystical text-center bg-gradient-to-r from-accent to-accent2 bg-clip-text text-transparent">
+                    生辰八字 · 融合测算
+                </h2>
+                
+                <form id="birthForm" class="space-y-4">
+                    <!-- 姓名输入 -->
+                    <div class="relative">
+                        <label class="block text-sm font-medium mb-1 flex items-center">
+                            <i class="fa fa-user-circle text-accent mr-2"></i>
+                            姓名
+                        </label>
+                        <input type="text" id="name" placeholder="可选，用于姓名学分析" 
+                               class="w-full bg-bg/80 border border-border rounded-md px-3 py-2 text-sm input-focus backdrop-blur-sm">
+                    </div>
+
+                    <!-- 出生年份 -->
+                    <div class="relative">
+                        <label class="block text-sm font-medium mb-1 flex items-center">
+                            <i class="fa fa-calendar text-accent mr-2"></i>
+                            出生年份
+                        </label>
+                        <input type="number" id="year" min="1900" max="2100" required
+                               class="w-full bg-bg/80 border border-border rounded-md px-3 py-2 text-sm input-focus backdrop-blur-sm">
+                    </div>
+
+                    <!-- 出生月份 -->
+                    <div class="relative">
+                        <label class="block text-sm font-medium mb-1 flex items-center">
+                            <i class="fa fa-moon-o text-accent mr-2"></i>
+                            出生月份
+                        </label>
+                        <input type="number" id="month" min="1" max="12" required
+                               class="w-full bg-bg/80 border border-border rounded-md px-3 py-2 text-sm input-focus backdrop-blur-sm">
+                    </div>
+
+                    <!-- 出生日期 -->
+                    <div class="relative">
+                        <label class="block text-sm font-medium mb-1 flex items-center">
+                            <i class="fa fa-sun-o text-accent mr-2"></i>
+                            出生日期
+                        </label>
+                        <input type="number" id="day" min="1" max="31" required
+                               class="w-full bg-bg/80 border border-border rounded-md px-3 py-2 text-sm input-focus backdrop-blur-sm">
+                    </div>
+
+                    <!-- 出生时辰 -->
+                    <div class="relative">
+                        <label class="block text-sm font-medium mb-1 flex items-center">
+                            <i class="fa fa-star text-accent mr-2"></i>
+                            出生时辰（时）
+                        </label>
+                        <input type="number" id="hour" min="0" max="23" required
+                               class="w-full bg-bg/80 border border-border rounded-md px-3 py-2 text-sm input-focus backdrop-blur-sm">
+                    </div>
+
+                    <!-- 出生分钟 -->
+                    <div class="relative">
+                        <label class="block text-sm font-medium mb-1 flex items-center">
+                            <i class="fa fa-star-o text-accent mr-2"></i>
+                            出生分钟
+                        </label>
+                        <input type="number" id="minute" min="0" max="59" required
+                               class="w-full bg-bg/80 border border-border rounded-md px-3 py-2 text-sm input-focus backdrop-blur-sm">
+                    </div>
+
+                    <!-- 性别 -->
+                    <div class="relative">
+                        <label class="block text-sm font-medium mb-1 flex items-center">
+                            <i class="fa fa-venus-mars text-accent mr-2"></i>
+                            性别
+                        </label>
+                        <select id="gender" required
+                                class="w-full bg-bg/80 border border-border rounded-md px-3 py-2 text-sm input-focus backdrop-blur-sm appearance-none">
+                            <option value="">请选择</option>
+                            <option value="male">男</option>
+                            <option value="female">女</option>
+                        </select>
+                        <div class="absolute right-3 top-8 text-muted pointer-events-none">
+                            <i class="fa fa-chevron-down"></i>
+                        </div>
+                    </div>
+
+                    <!-- 纬度 -->
+                    <div class="relative">
+                        <label class="block text-sm font-medium mb-1 flex items-center">
+                            <i class="fa fa-map-marker text-accent mr-2"></i>
+                            纬度
+                        </label>
+                        <input type="number" id="latitude" step="0.01" value="31.23" required
+                               class="w-full bg-bg/80 border border-border rounded-md px-3 py-2 text-sm input-focus backdrop-blur-sm">
+                    </div>
+
+                    <!-- 经度 -->
+                    <div class="relative">
+                        <label class="block text-sm font-medium mb-1 flex items-center">
+                            <i class="fa fa-compass text-accent mr-2"></i>
+                            经度
+                        </label>
+                        <input type="number" id="longitude" step="0.01" value="121.47" required
+                               class="w-full bg-bg/80 border border-border rounded-md px-3 py-2 text-sm input-focus backdrop-blur-sm">
+                    </div>
+
+                    <!-- 预测场景 -->
+                    <div class="relative">
+                        <label class="block text-sm font-medium mb-1 flex items-center">
+                            <i class="fa fa-eye text-accent mr-2"></i>
+                            预测场景
+                        </label>
+                        <select id="scene" required
+                                class="w-full bg-bg/80 border border-border rounded-md px-3 py-2 text-sm input-focus backdrop-blur-sm appearance-none">
+                            <option value="">请选择</option>
+                            <option value="终身格局">终身格局 · 一生走向</option>
+                            <option value="年度趋势">年度趋势 · 年运分析</option>
+                            <option value="月度趋势">月度趋势 · 月运分析</option>
+                            <option value="具体事件">具体事件 · 吉凶预测</option>
+                            <option value="性格分析">性格分析 · 人格特质</option>
+                            <option value="健康风险">健康风险 · 体质分析</option>
+                        </select>
+                        <div class="absolute right-3 top-8 text-muted pointer-events-none">
+                            <i class="fa fa-chevron-down"></i>
+                        </div>
+                    </div>
+
+                    <!-- 提交按钮 -->
+                    <button type="submit" id="submitBtn"
+                            class="w-full gradient-btn text-white py-3 rounded-md font-medium font-mystical text-lg animate-glow relative overflow-hidden group">
+                        <span class="relative z-10 flex items-center justify-center">
+                            <i class="fa fa-crystal-ball mr-2"></i>
+                            开启融合测算
+                        </span>
+                        <span class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -translate-x-full group-hover:translate-x-full transition-transform duration-700"></span>
+                    </button>
+
+                    <!-- 免责声明 -->
+                    <div class="text-xs text-muted mt-4 p-3 bg-bg/50 rounded-md border border-border/50 backdrop-blur-sm">
+                        <p class="flex items-center mb-1">
+                            <i class="fa fa-exclamation-circle mr-1 text-yellow"></i>
+                            天机不可尽泄，命理仅供参考
+                        </p>
+                        <p class="flex items-center">
+                            <i class="fa fa-moon-o mr-1 text-accent"></i>
+                            万法唯心，福祸自招，行善积德方为正道
+                        </p>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Right Result Panel -->
+            <div class="flex-1 relative z-10">
+                <!-- 初始状态 -->
+                <div id="initialState" class="bg-card rounded-lg p-6 card-shadow card-glow h-full flex flex-col items-center justify-center text-center relative overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-br from-accent/10 to-accent2/10"></div>
+                    <div class="relative z-10">
+                        <div class="w-32 h-32 mx-auto mb-6 relative">
+                            <div class="absolute inset-0 rounded-full bg-gradient-to-r from-accent to-accent2 animate-pulse-slow opacity-30"></div>
+                            <div class="absolute inset-4 rounded-full bg-card flex items-center justify-center">
+                                <i class="fa fa-crystal-ball text-6xl text-accent animate-float"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-2xl font-semibold mb-3 font-mystical bg-gradient-to-r from-accent to-accent2 bg-clip-text text-transparent">
+                            Fortune Fusion Engine 已就绪
+                        </h3>
+                        <p class="text-muted mb-8 max-w-md">
+                            融合10大命理体系，动态权重智能决策。请输入您的生辰八字，开启多维度命理融合分析。
+                        </p>
+                        <div class="grid grid-cols-2 gap-4 w-full max-w-md">
+                            <div class="bg-bg/80 rounded-lg p-4 border border-border/50 backdrop-blur-sm hover:border-accent/50 transition-colors">
+                                <div class="text-accent text-lg font-bold flex items-center justify-center">
+                                    <i class="fa fa-book mr-2"></i>10
+                                </div>
+                                <div class="text-sm text-muted">命理体系</div>
+                            </div>
+                            <div class="bg-bg/80 rounded-lg p-4 border border-border/50 backdrop-blur-sm hover:border-accent/50 transition-colors">
+                                <div class="text-accent text-lg font-bold flex items-center justify-center">
+                                    <i class="fa fa-brain mr-2"></i>AI
+                                </div>
+                                <div class="text-sm text-muted">动态融合算法</div>
+                            </div>
+                            <div class="bg-bg/80 rounded-lg p-4 border border-border/50 backdrop-blur-sm hover:border-accent/50 transition-colors">
+                                <div class="text-accent text-lg font-bold flex items-center justify-center">
+                                    <i class="fa fa-cogs mr-2"></i>5
+                                </div>
+                                <div class="text-sm text-muted">权重因子</div>
+                            </div>
+                            <div class="bg-bg/80 rounded-lg p-4 border border-border/50 backdrop-blur-sm hover:border-accent/50 transition-colors">
+                                <div class="text-accent text-lg font-bold flex items-center justify-center">
+                                    <i class="fa fa-bolt mr-2"></i>&lt;1s
+                                </div>
+                                <div class="text-sm text-muted">融合响应</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 加载状态 -->
+                <div id="loadingState" class="bg-card rounded-lg p-6 card-shadow card-glow h-full flex flex-col items-center justify-center hidden relative overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-br from-accent/5 to-accent2/5"></div>
+                    <div class="relative z-10">
+                        <div class="w-40 h-40 mx-auto mb-8 relative">
+                            <div class="absolute inset-0 rounded-full bg-gradient-to-r from-accent to-accent2 animate-pulse-slow opacity-30"></div>
+                            <div class="absolute inset-4 rounded-full bg-card flex items-center justify-center">
+                                <div class="spinner text-accent text-6xl">
+                                    <i class="fa fa-cog"></i>
+                                </div>
+                            </div>
+                            <div class="absolute -top-2 -right-2 w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center animate-float">
+                                <i class="fa fa-star text-accent"></i>
+                            </div>
+                            <div class="absolute -bottom-2 -left-2 w-12 h-12 rounded-full bg-accent2/20 flex items-center justify-center animate-float" style="animation-delay: -2s;">
+                                <i class="fa fa-moon-o text-accent2"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-2xl font-semibold mb-3 font-mystical bg-gradient-to-r from-accent to-accent2 bg-clip-text text-transparent">
+                            融合计算中
+                        </h3>
+                        <p class="text-muted text-center mb-8 max-w-md">
+                            八字命理 · 紫微斗数 · 奇门遁甲 · 六爻纳甲 · 西方占星<br>
+                            10大体系正在动态加权融合计算...
+                        </p>
+                        <div class="w-full max-w-md">
+                            <div class="flex justify-between text-sm mb-2">
+                                <span class="font-medium">融合进度</span>
+                                <span id="loadingProgress" class="text-accent font-bold">0%</span>
+                            </div>
+                            <div class="progress-bar rounded-full h-3">
+                                <div id="loadingBar" class="progress-fill bg-gradient-to-r from-accent to-accent2" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="mt-6 text-xs text-muted/70">
+                            <i class="fa fa-info-circle mr-1"></i>
+                            动态权重 = 基础权重 × 场景适配 × 历史准确率 × 置信度 × 用户校准
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 结果状态 -->
+                <div id="resultState" class="hidden space-y-6 relative z-10">
+                    <!-- 融合评分卡片 -->
+                    <div class="bg-card rounded-lg p-6 card-shadow card-glow mystical-border relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-br from-accent/10 to-accent2/10"></div>
+                        <div class="relative z-10">
+                            <div class="flex flex-col md:flex-row md:items-end justify-between mb-8">
+                                <div class="text-center md:text-left">
+                                    <div class="text-6xl font-bold font-mystical" id="fusionScore">--</div>
+                                    <div class="text-muted mt-1">融合综合评分 (0-100)</div>
+                                </div>
+                                <div class="mt-4 md:mt-0">
+                                    <span class="px-4 py-2 rounded-full text-sm font-medium font-mystical" id="trendLabel">
+                                        计算中...
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div class="bg-bg/80 rounded-lg p-4 border border-border/50 backdrop-blur-sm hover:border-accent/50 transition-all group">
+                                    <div class="text-xs text-muted mb-2 flex items-center">
+                                        <i class="fa fa-question-circle mr-1 text-accent"></i>
+                                        不确定性
+                                    </div>
+                                    <div class="text-xl font-bold group-hover:text-accent transition-colors" id="uncertainty">--</div>
+                                </div>
+                                <div class="bg-bg/80 rounded-lg p-4 border border-border/50 backdrop-blur-sm hover:border-accent/50 transition-all group">
+                                    <div class="text-xs text-muted mb-2 flex items-center">
+                                        <i class="fa fa-warning mr-1 text-yellow"></i>
+                                        风险等级
+                                    </div>
+                                    <div class="text-xl font-bold group-hover:text-yellow transition-colors" id="riskLevel">--</div>
+                                </div>
+                                <div class="bg-bg/80 rounded-lg p-4 border border-border/50 backdrop-blur-sm hover:border-accent/50 transition-all group">
+                                    <div class="text-xs text-muted mb-2 flex items-center">
+                                        <i class="fa fa-check-circle mr-1 text-green"></i>
+                                        可靠性
+                                    </div>
+                                    <div class="text-xl font-bold group-hover:text-green transition-colors" id="reliability">--</div>
+                                </div>
+                                <div class="bg-bg/80 rounded-lg p-4 border border-border/50 backdrop-blur-sm hover:border-accent/50 transition-all group">
+                                    <div class="text-xs text-muted mb-2 flex items-center">
+                                        <i class="fa fa-bolt mr-1 text-accent2"></i>
+                                        计算耗时
+                                    </div>
+                                    <div class="text-xl font-bold group-hover:text-accent2 transition-colors" id="calculationTime">--</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 共识分析卡片 -->
+                    <div id="consensusCard" class="bg-card rounded-lg p-6 card-shadow card-glow relative overflow-hidden border border-accent/20">
+                        <div class="absolute inset-0 bg-gradient-to-br from-accent/5 to-accent2/5"></div>
+                        <div class="relative z-10">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center font-mystical text-accent">
+                                <i class="fa fa-balance-scale text-accent mr-2"></i>
+                                共识分析 · 融合权重详情
+                            </h3>
+                            <div id="consensusContent" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 冲突提示卡片 -->
+                    <div id="conflictCard" class="bg-card rounded-lg p-6 card-shadow card-glow hidden relative overflow-hidden border border-yellow/30">
+                        <div class="absolute inset-0 bg-gradient-to-br from-yellow/5 to-red/5"></div>
+                        <div class="relative z-10">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center font-mystical text-yellow">
+                                <i class="fa fa-exclamation-triangle text-yellow mr-2 animate-pulse"></i>
+                                体系冲突 · 结果分歧
+                            </h3>
+                            <div id="conflictContent" class="space-y-3">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 各体系结果网格 -->
+                    <div class="bg-card rounded-lg p-6 card-shadow card-glow relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-br from-accent/10 to-accent2/10"></div>
+                        <div class="relative z-10">
+                            <h3 class="text-lg font-semibold mb-6 font-mystical bg-gradient-to-r from-accent to-accent2 bg-clip-text text-transparent flex items-center">
+                                <i class="fa fa-book mr-2 text-accent"></i>
+                                10大命理体系推演结果
+                            </h3>
+                            <div id="systemsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // API 配置（同源部署，无需跨域）
+        const API_BASE = window.location.origin;
+        
+        // 10大命理体系配置（与后端一致）
+        const SYSTEMS_CONFIG = {
+            '八字命理':   { icon: 'fa-chart-line',  color: '#ef4444' },
+            '紫微斗数':   { icon: 'fa-star',        color: '#f59e0b' },
+            '七政四余':   { icon: 'fa-sun-o',       color: '#f97316' },
+            '西方占星':   { icon: 'fa-globe',       color: '#3b82f6' },
+            '奇门遁甲':   { icon: 'fa-compass',     color: '#8b5cf6' },
+            '大六壬':     { icon: 'fa-book',        color: '#06b6d4' },
+            '六爻纳甲':   { icon: 'fa-random',      color: '#10b981' },
+            '梅花易数':   { icon: 'fa-tree',        color: '#84cc16' },
+            '数字命理学': { icon: 'fa-calculator',  color: '#ec4899' },
+            '姓名学':     { icon: 'fa-font',        color: '#a855f7' },
+        };
+
+        // 风险等级中文映射
+        const RISK_MAP = {
+            'none': '无', 'low': '低', 'medium': '中等', 'high': '高', 'critical': '极高'
+        };
+
+        // 趋势中文映射
+        const TREND_MAP = {
+            'positive': '整体向好', 'neutral': '平稳过渡', 'negative': '需谨慎'
+        };
+
+        // 可靠性中文映射
+        const RELIABILITY_MAP = {
+            'high': '高', 'medium': '中等', 'low': '低'
+        };
+
+        // DOM 元素
+        const form = document.getElementById('birthForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const initialState = document.getElementById('initialState');
+        const loadingState = document.getElementById('loadingState');
+        const resultState = document.getElementById('resultState');
+        const loadingProgress = document.getElementById('loadingProgress');
+        const loadingBar = document.getElementById('loadingBar');
+
+        // 星空粒子效果
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            for (let i = 0; i < 200; i++) {
+                const star = document.createElement('div');
+                const size = Math.random() * 2;
+                star.style.cssText = `position:absolute;width:${size}px;height:${size}px;background:white;border-radius:50%;left:${Math.random()*100}%;top:${Math.random()*100}%;opacity:${Math.random()*0.8+0.2};animation:twinkle ${Math.random()*3+2}s ease-in-out infinite;animation-delay:${Math.random()*5}s;`;
+                starsContainer.appendChild(star);
+            }
+        }
+        const styleEl = document.createElement('style');
+        styleEl.textContent = '@keyframes twinkle{0%,100%{opacity:0.2}50%{opacity:0.8}}';
+        document.head.appendChild(styleEl);
+        window.addEventListener('load', createStars);
+
+        // 设置默认日期
+        const today = new Date();
+        document.getElementById('year').value = today.getFullYear();
+        document.getElementById('month').value = today.getMonth() + 1;
+        document.getElementById('day').value = today.getDate();
+        document.getElementById('hour').value = today.getHours();
+        document.getElementById('minute').value = today.getMinutes();
+
+        // 模拟加载进度
+        function simulateLoading() {
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress >= 100) { progress = 100; clearInterval(interval); }
+                loadingProgress.textContent = `${Math.round(progress)}%`;
+                loadingBar.style.width = `${progress}%`;
+            }, 200);
+            return interval;
+        }
+
+        // 表单提交
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // 禁用按钮
+            submitBtn.disabled = true;
+            
+            // 显示加载状态
+            initialState.classList.add('hidden');
+            loadingState.classList.remove('hidden');
+            resultState.classList.add('hidden');
+            
+            const progressInterval = simulateLoading();
+            
+            // 构建请求数据
+            const requestData = {
+                birth_info: {
+                    year: parseInt(document.getElementById('year').value),
+                    month: parseInt(document.getElementById('month').value),
+                    day: parseInt(document.getElementById('day').value),
+                    hour: parseInt(document.getElementById('hour').value),
+                    minute: parseInt(document.getElementById('minute').value),
+                    latitude: parseFloat(document.getElementById('latitude').value),
+                    longitude: parseFloat(document.getElementById('longitude').value)
+                },
+                gender: document.getElementById('gender').value,
+                name: document.getElementById('name').value || null,
+                scene: document.getElementById('scene').value
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/query`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || `HTTP ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                // 等加载动画完成
+                clearInterval(progressInterval);
+                loadingProgress.textContent = '100%';
+                loadingBar.style.width = '100%';
+                
+                setTimeout(() => displayResult(result), 500);
+
+            } catch (error) {
+                clearInterval(progressInterval);
+                loadingState.classList.add('hidden');
+                initialState.classList.remove('hidden');
+                alert(`测算失败: ${error.message}\n\n请确认 API 服务已启动 (${API_BASE})`);
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+
+        // 显示结果
+        function displayResult(result) {
+            loadingState.classList.add('hidden');
+            resultState.classList.remove('hidden');
+
+            const fusion = result.fusion_result;
+
+            // 融合评分
+            const fusionScore = document.getElementById('fusionScore');
+            fusionScore.textContent = fusion.score.toFixed(1);
+            fusionScore.className = `text-6xl font-bold font-mystical ${getScoreClass(fusion.score)}`;
+
+            // 趋势标签
+            const trendLabel = document.getElementById('trendLabel');
+            trendLabel.textContent = TREND_MAP[fusion.trend] || fusion.trend;
+            trendLabel.className = `px-4 py-2 rounded-full text-sm font-medium font-mystical trend-${fusion.trend}`;
+
+            // 四个指标
+            document.getElementById('uncertainty').textContent = fusion.uncertainty.toFixed(1);
+            document.getElementById('riskLevel').textContent = RISK_MAP[fusion.risk_level] || fusion.risk_level;
+            document.getElementById('reliability').textContent = RELIABILITY_MAP[fusion.reliability] || fusion.reliability;
+            document.getElementById('calculationTime').textContent = `${result.total_calculation_time_ms}ms`;
+
+            // 共识分析
+            const consensusContent = document.getElementById('consensusContent');
+            consensusContent.innerHTML = '';
+            if (fusion.consensus) {
+                const items = [
+                    { label: '主导趋势', value: TREND_MAP[fusion.consensus.dominant_trend] || fusion.consensus.dominant_trend, icon: 'fa-arrow-trend-up' },
+                    { label: '趋势共识率', value: `${(fusion.consensus.trend_consensus_ratio * 100).toFixed(0)}%`, icon: 'fa-percentage' },
+                    { label: '平均风险值', value: fusion.consensus.average_risk_score.toFixed(1), icon: 'fa-shield' },
+                    { label: '参与体系数', value: `${fusion.consensus.consensus_systems_count}个`, icon: 'fa-layer-group' },
+                ];
+                items.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center justify-between p-3 bg-bg/50 rounded-md border border-border/30';
+                    div.innerHTML = `
+                        <div class="flex items-center">
+                            <i class="fa ${item.icon} text-accent mr-2"></i>
+                            <span class="text-sm text-muted">${item.label}</span>
+                        </div>
+                        <span class="font-medium">${item.value}</span>
+                    `;
+                    consensusContent.appendChild(div);
+                });
+            }
+
+            // 冲突提示
+            const conflictCard = document.getElementById('conflictCard');
+            const conflictContent = document.getElementById('conflictContent');
+            if (fusion.conflicts && fusion.conflicts.length > 0) {
+                conflictCard.classList.remove('hidden');
+                conflictContent.innerHTML = '';
+                fusion.conflicts.forEach(conflict => {
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center justify-between p-3 bg-bg/50 rounded-md border border-yellow/20';
+                    div.innerHTML = `
+                        <div class="flex items-center">
+                            <i class="fa fa-balance-scale text-yellow mr-2"></i>
+                            <span class="font-medium">${conflict.systems[0]} vs ${conflict.systems[1]}</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="text-yellow font-bold mr-2">分差${conflict.diff.toFixed(0)}分</span>
+                            <span class="text-xs bg-yellow/10 text-yellow px-2 py-1 rounded">
+                                ${conflict.severity === 'high' ? '⚠️ 高冲突' : '⚡ 中等冲突'}
+                            </span>
+                        </div>
+                    `;
+                    conflictContent.appendChild(div);
+                });
+            } else {
+                conflictCard.classList.add('hidden');
+            }
+
+            // 各体系结果网格
+            const systemsGrid = document.getElementById('systemsGrid');
+            systemsGrid.innerHTML = '';
+            
+            fusion.contributing_systems.forEach(sys => {
+                const config = SYSTEMS_CONFIG[sys.system] || { icon: 'fa-question', color: '#888' };
+                const card = document.createElement('div');
+                card.className = 'bg-bg/80 rounded-lg p-4 border border-border/50 backdrop-blur-sm hover:border-accent/50 transition-all group hover:scale-105 hover:shadow-lg hover:shadow-accent/20';
+                
+                const scoreClass = getScoreClass(sys.score);
+                const trendText = TREND_MAP[sys.trend] || '';
+                
+                card.innerHTML = `
+                    <div class="flex flex-col items-center text-center">
+                        <div class="system-icon group-hover:scale-110 transition-transform" style="background: linear-gradient(135deg, ${config.color}88, ${config.color})">
+                            <i class="fa ${config.icon}"></i>
+                        </div>
+                        <div class="text-sm font-medium mb-2 font-mystical">${sys.system}</div>
+                        <div class="text-2xl font-bold ${scoreClass} mb-1">${sys.score.toFixed(1)}</div>
+                        <div class="text-xs text-muted mb-1">
+                            <i class="fa fa-check-circle mr-1"></i>
+                            置信度 ${(sys.confidence * 100).toFixed(0)}%
+                        </div>
+                        <div class="text-xs text-accent mb-3">
+                            权重 ${(sys.weight * 100).toFixed(1)}%
+                        </div>
+                        <div class="progress-bar w-full mb-3">
+                            <div class="progress-fill ${scoreClass}" style="width: ${sys.score}%"></div>
+                        </div>
+                        <div class="text-xs px-2 py-1 rounded-full bg-bg/50">
+                            <i class="fa fa-shield mr-1"></i>
+                            ${RISK_MAP[sys.risk_level] || sys.risk_level}
+                        </div>
+                    </div>
+                `;
+                systemsGrid.appendChild(card);
+            });
+        }
+
+        function getScoreClass(score) {
+            if (score >= 70) return 'score-high';
+            if (score >= 40) return 'score-medium';
+            return 'score-low';
+        }
+    </script>
+</body>
+</html>
